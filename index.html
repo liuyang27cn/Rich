@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	
+	<title>I'm rich</title>
+	<link rel="stylesheet" media="all" href="https://checkout.stripe.com/v3/checkout/button.css">
+
+	<script type="text/javascript" src="jquery-latest.min.js"></script>
+	<script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.8.1/jquery.validate.min.js"></script>
+	<script type="text/javascript" src="https://js.stripe.com/v1/"></script>
+
+</head>
+<body>	
+	<div id="oly" class="central"></div>
+	<div id="olyBack"></div>	
+
+	<form id="test" action="charge" method="POST" style="display:none;">
+	  	<div class="form-row">
+			<label for="name" class="stripeLabel">Your Name</label>
+			<input type="text" name="name" class="required" />
+		</div>            
+
+		<div class="form-row">
+			<label for="email">E-mail Address</label>
+			<input type="text" name="email" class="required" />
+		</div>            
+
+		<div class="form-row">
+			<label>Card Number</label>
+			<input type="text" maxlength="20" autocomplete="off" class="card-number stripe-sensitive required" />
+		</div>
+		
+		<div class="form-row">
+			<label>CVC</label>
+			<input type="text" maxlength="4" autocomplete="off" class="card-cvc stripe-sensitive required" />
+		</div>
+		
+		<div class="form-row">
+			<label>Expiration</label>
+			<div class="expiry-wrapper">
+				<select class="card-expiry-month stripe-sensitive required">
+				</select>
+				<script type="text/javascript">
+					var select = $(".card-expiry-month"),
+						month = new Date().getMonth() + 1;
+					for (var i = 1; i <= 12; i++) {
+						select.append($("<option value='"+i+"' "+(month === i ? "selected" : "")+">"+i+"</option>"))
+					}
+				</script>
+				<span> / </span>
+				<select class="card-expiry-year stripe-sensitive required"></select>
+				<script type="text/javascript">
+					var select = $(".card-expiry-year"),
+						year = new Date().getFullYear();
+
+					for (var i = 0; i < 12; i++) {
+						select.append($("<option value='"+(i + year)+"' "+(i === 0 ? "selected" : "")+">"+(i + year)+"</option>"))
+					}
+				</script>
+			</div>
+		</div>
+
+		<div class="form-row">
+			<label for="amount">Amount</label>
+			<input type="text" name="amount" class="required" placeholder="How much would you like to pay?" size="35"/>
+		</div>   
+		
+		<button type="submit" name="submitButton">Submit</button>
+		<span class="payment-errors"></span>
+	</form>
+
+	<button id="customButton" type="submit" class="stripe-button-el stripe-button" style="visibility: visible;"><span style="display: block; min-height: 30px;">Pay with Card</span></button>
+	
+	<script>
+		Stripe.setPublishableKey('pk_test_6pRNASCoBOKtIshFeQd4XMUh');
+		function submit(form) {
+		    debugger;
+		    $(form['submitButton']).attr("disabled", "disabled")
+
+			Stripe.createToken({
+							number: $('.card-number').val(),
+							cvc: $('.card-cvc').val(),
+							exp_month: $('.card-expiry-month').val(), 
+							exp_year: $('.card-expiry-year').val()
+						}, function(status, response) {
+							if (response.error) {
+								// re-enable the submit button
+								$(form['submitButton']).removeAttr("disabled")
+		
+								// show the error
+								$(".payment-errors").html(response.error.message);
+ 
+								// we add these names back in so we can revalidate properly
+// 								addInputNames();
+							} else {
+								// token contains id, last4, and card type
+								var token = response['id'];
+ 
+								// insert the stripe token
+								var input = $("<input name='stripeToken' value='" + token + "' style='display:none;' />");
+								form.appendChild(input[0])
+ 
+								// and submit
+								form.submit();
+							}
+						});
+		};
+		
+		$("#test").validate({
+			submitHandler: submit,
+			rules: {
+				"card-cvc" : {
+					cardCVC: true,
+					required: true
+				},
+				"card-number" : {
+					cardNumber: true,
+					required: true
+				},
+				"card-expiry-year" : "cardExpiry" // we don't validate month separately
+			}
+		});    
+	// 
+// 	  var handler = StripeCheckout.configure({
+// 		key: 'pk_test_6pRNASCoBOKtIshFeQd4XMUh',
+// 		image: '/square-image.png',
+// 		token: function(token, args) {
+// 		  // Use the token to create the charge with a server-side script.
+// 		  // You can access the token ID with `token.id`
+// // 			alert('haha');
+// 			var $input = $('<input type=hidden name=stripeToken />').val(token.id);
+// 			$('form').append($input).submit();
+// 		}
+// 	  });
+// 
+	  document.getElementById('customButton').addEventListener('click', function(e) {
+// 		// Open Checkout with further options
+// 		var amount = $('#amount').val();
+// 		// handler.open({
+// // 		  name: 'Demo Site',
+// // 		  description: '$' + amount + '.00',
+// // 		  amount: amount * 100
+// // 		});
+		$("#test").show();
+// 		e.preventDefault();
+	  });
+	</script>
+	
+</body>
+</html>
